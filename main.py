@@ -22,6 +22,8 @@ def preprocess_text(text):
     print(words)
     encoded_review = [word_index.get(word, 2) + 3 for word in words]
     print(encoded_review)
+    encoded_review = [i for i in encoded_review if i<10000]
+    print(encoded_review)
     padded_review = sequence.pad_sequences([encoded_review], maxlen=500)
     return padded_review, encoded_review
 
@@ -45,6 +47,7 @@ if st.button('Classify'):
     else:
         try:
             prediction=model.predict(preprocessed_input)
+            print(prediction[0][0])
             sentiment='Positive' if prediction[0][0] > 0.5 else 'Negative'
             st.write(f'Sentiment: {sentiment}')
             st.write(f'Prediction Score: {prediction[0][0]}')
