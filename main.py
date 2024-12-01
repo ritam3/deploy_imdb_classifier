@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.models import load_model
+import re
 
 # Load the IMDB dataset word index
 word_index = imdb.get_word_index()
@@ -12,17 +13,17 @@ reverse_word_index = {value: key for key, value in word_index.items()}
 # Load the pre-trained model with ReLU activation
 model = load_model('simple_rnn_imdb_2.h5')
 
-# Step 2: Helper Functions
-# Function to decode reviews
-def decode_review(encoded_review):
-    return ' '.join([reverse_word_index.get(i - 3, '?') for i in encoded_review])
-
 # Function to preprocess user input
 def preprocess_text(text):
-    words = text.lower().split()
+    print(text)
+    cleaned_text = re.sub(r'[^a-zA-Z0-9 ]', '', text)
+    print(cleaned_text)
+    words = cleaned_text.lower().split()
+    print(words)
     encoded_review = [word_index.get(word, 2) + 3 for word in words]
+    print(encoded_review)
     padded_review = sequence.pad_sequences([encoded_review], maxlen=500)
-    return padded_review
+    return padded_review, encoded_review
 
 
 import streamlit as st
@@ -36,15 +37,23 @@ user_input = st.text_area('IMDB Movie Review using Simple RNN')
 
 if st.button('Classify'):
 
-    preprocessed_input=preprocess_text(user_input)
-
+    preprocessed_input, encoded_inp =preprocess_text(user_input)
+    print(encoded_inp)
+    if len(encoded_inp)==0:
+        st.write('Could not classify. Try with a different review')
     ## MAke prediction
-    prediction=model.predict(preprocessed_input)
-    sentiment='Positive' if prediction[0][0] > 0.5 else 'Negative'
+    else:
+        try:
+            prediction=model.predict(preprocessed_input)
+            sentiment='Positive' if prediction[0][0] > 0.5 else 'Negative'
+            st.write(f'Sentiment: {sentiment}')
+            st.write(f'Prediction Score: {prediction[0][0]}')
+        except:
+            st.write('Could not classify. Try with a different review')
+    
 
     # Display the result
-    st.write(f'Sentiment: {sentiment}')
-    st.write(f'Prediction Score: {prediction[0][0]}')
+    
 else:
     st.write('Please enter a movie review.')
 
